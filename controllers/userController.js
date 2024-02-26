@@ -1,17 +1,11 @@
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+
 import { jwtDecode } from "jwt-decode";
+import { sendVerificationEmail } from "./sendEmail.js";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "adelnamazi61@gmail.com",
-    pass: "aari ktsn ujve erwl",
-  },
-});
-
+//Register
 export const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
   const userExist = await User.findOne({ email });
@@ -26,7 +20,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     },
     process.env.VERIFY_ACCOUNT_TOKEN_SECRET,
     {
-      expiresIn: "120s",
+      expiresIn: "15m",
     }
   );
   res.cookie("verify_account", verifyAccountToken, {
@@ -35,18 +29,11 @@ export const registerUser = asyncHandler(async (req, res) => {
     secure: true,
   });
 
-  let details = {
-    from: "adelnamazi61@gmail.com",
-    to: email,
-    subject: "verify Account",
-    text: `http://localhost:3000/api/verify_account/${verifyAccountToken}`,
-  };
-  await transporter.sendMail(details);
-
-  const message = "You are successful registred ";
-  res.json({ message, verifyAccountToken });
+  await sendVerificationEmail(email, verifyAccountToken);
+  res.json({ message: "You are successful registred ", verifyAccountToken });
 });
 
+//VerifyAccount
 export const verifyAccount = asyncHandler(async (req, res) => {
   try {
     const token = req.cookies.verify_account;
@@ -63,6 +50,7 @@ export const verifyAccount = asyncHandler(async (req, res) => {
   }
 });
 
+//Login
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const foundUser = await User.findOne({ email });
@@ -120,15 +108,36 @@ export const loginUser = asyncHandler(async (req, res) => {
         userInfo_access,
         userInfo_refresh,
         refreshToken,
+        message: "Sie haben erfolgreich login",
       });
     } else {
-      throw new Error("Sie mussen Ihre Account Verification");
+      const verifyAccountToken = jwt.sign(
+        {
+          email,
+        },
+        process.env.VERIFY_ACCOUNT_TOKEN_SECRET,
+        {
+          expiresIn: "15m",
+        }
+      );
+      res.cookie("verify_account", verifyAccountToken, {
+        httpOnly: true,
+        maxAge: 2 * 60 * 1000,
+        secure: true,
+      });
+
+      await sendVerificationEmail(email, verifyAccountToken);
+
+      throw new Error(
+        "Sie mussen Ihre Account Verification, wir haben eine Link für Sie geschikt"
+      );
     }
   } else {
     throw new Error("Email or Password is falsh");
   }
 });
 
+//Logout
 export const logoutUser = asyncHandler(async (req, res) => {
   const token = req.cookies.accessToken;
   if (!token) throw new Error("keine Token verfügbar");
