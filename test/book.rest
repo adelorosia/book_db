@@ -1,0 +1,54 @@
+### Get All Books
+GET http://localhost:3005/api/books
+
+### Login
+POST http://localhost:3005/api/login
+Content-Type: application/json
+
+{
+    "email":"khalil.haouas@gmail.com",
+    "password":"123456"
+}
+
+
+
+### Create Book
+POST http://localhost:3005/api/books/create
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NWQ3NjY5ZWQ3MDgxMGQyOTc0OTViMjUiLCJmaXJzdE5hbWUiOiJLaGFsaWwiLCJsYXN0TmFtZSI6Ikhhb3VhcyIsImVtYWlsIjoia2hhbGlsLmhhb3Vhc0BnbWFpbC5jb20iLCJwaG90byI6Imh0dHBzOi8vY2RuLWljb25zLXBuZy5mcmVlcGlrLmNvbS81MTIvNjEwLzYxMDEyMC5wbmciLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3MDg2MTU4NDAsImV4cCI6MTcwODYxNTg3MH0.IabdRQLY87EokFTJCn9E0tJXxdQFsjYtRVWApB8Dm9g
+Content-Type: application/json
+
+{
+    "title":"Behdad Post",
+    "author":"Rebecca Yarros",
+    "amount":"14.99",
+    "due":"2023",
+    "cover":"https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1701980900i/61431922.jpg",
+    "desc":"Twenty-year-old Violet Sorrengail was supposed to enter the Scribe Quadrant, living a quiet life among books and history. Now, the commanding general—also known as her tough-as-talons mother—has ordered Violet to join the hundreds of candidates striving to become the elite of Navarre: dragon riders."
+}
+
+### REFRESH TOKEN
+GET http://localhost:3005/api/token
+
+### Delete Book
+DELETE http://localhost:3005/api/books/delete
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NWQ3NjY2NGQ3MDgxMGQyOTc0OTViMjIiLCJmaXJzdE5hbWUiOiJBZGVsIiwibGFzdE5hbWUiOiJOYW1hemkiLCJlbWFpbCI6ImFkZWxfb3Jvc2lhQHlhaG9vLmNvbSIsInBob3RvIjoiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZyZWVwaWsuY29tLzUxMi82MTAvNjEwMTIwLnBuZyIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3MDg2MTU2MjEsImV4cCI6MTcwODYxNTY1MX0.rcaZcho38mzohnVNkNr-JK8pqnyBNsX9lSVGhYZrDMU
+Content-Type: application/json
+
+{
+    "_id":"65d667d8b3557d3916755b23"
+}
+
+### Update Book
+PUT http://localhost:3005/api/books/update
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NWQ2M2Y1YzJlNTRlY2U2YWU0Y2YxOWMiLCJmaXJzdE5hbWUiOiJCZWhkYWQiLCJsYXN0TmFtZSI6Ik1pcmJhbmkiLCJlbWFpbCI6ImJlaGRhZF9taXJiYW5pQHlhaG9vLmNvbSIsInBob3RvIjoiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZyZWVwaWsuY29tLzUxMi82MTAvNjEwMTIwLnBuZyIsImlzQWRtaW4iOnRydWUsImlhdCI6MTcwODU1MTkyMSwiZXhwIjoxNzA4NTUxOTUxfQ.3qUx_e2T1MAAo0U13rUkRiWY0CjSwoQUxUhyifrrg3c
+Content-Type: application/json
+
+{
+    "_id":"65d66eddb80aceacc1aec145",
+    "title":"Gholam Karimi",
+    "author":"Rebecca Yarros",
+    "amount":"14.99",
+    "due":"2023",
+    "cover":"https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1701980900i/61431922.jpg",
+    "desc":"Twenty-year-old Violet Sorrengail was supposed to enter the Scribe Quadrant, living a quiet life among books and history. Now, the commanding general—also known as her tough-as-talons mother—has ordered Violet to join the hundreds of candidates striving to become the elite of Navarre: dragon riders."
+}
