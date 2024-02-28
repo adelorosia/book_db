@@ -1,157 +1,157 @@
 import asyncHandler from "express-async-handler";
-import User from "../models/userModel.js";
+import randomBytes from "randombytes";
+import Users from "../models/userModel.js";
 import jwt from "jsonwebtoken";
-
+import { sendVerificationLinkToEmail } from "../controllers/sendEmail.js";
 import { jwtDecode } from "jwt-decode";
-import { sendVerificationEmail } from "./sendEmail.js";
 
-//Register
 export const registerUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
-  const userExist = await User.findOne({ email });
-  if (userExist) {
-    throw new Error("Email Address is already in our database existed");
-  }
+  const { firstName, lastName, email, password, confirmPassword } = req.body;
+  const existEmail = await Users.findOne({ email });
+  if (existEmail)
+    throw new Error("Oops! Looks like this email is already in our system");
+  if (password !== confirmPassword)
+    throw new Error("Password and Confirm Password do not match.");
 
-  await User.create({ firstName, lastName, email, password });
-  const verifyAccountToken = jwt.sign(
+  await Users.create({ firstName, lastName, email, password });
+  const randomVerifyAccountToken = randomBytes(16).toString("hex");
+  const verifyToken = jwt.sign(
     {
       email,
+      randomVerifyAccountToken,
     },
-    process.env.VERIFY_ACCOUNT_TOKEN_SECRET,
+    process.env.VERIFY_TOKEN_SECRET,
     {
       expiresIn: "15m",
     }
   );
-  res.cookie("verify_account", verifyAccountToken, {
+
+  res.cookie("verifyAccount", verifyToken, {
     httpOnly: true,
-    maxAge: 2 * 60 * 1000,
-    secure: true,
+    maxAge: 15 * 60 * 1000,
+    secure: false,
   });
 
-  await sendVerificationEmail(email, verifyAccountToken);
-  res.json({ message: "You are successful registred ", verifyAccountToken });
+  await sendVerificationLinkToEmail(email, firstName, randomVerifyAccountToken);
+  res.status(201).json({
+    message: "You have successfully registered.",
+    token: randomVerifyAccountToken,
+  });
 });
 
-//VerifyAccount
 export const verifyAccount = asyncHandler(async (req, res) => {
-  try {
-    const token = req.cookies.verify_account;
-    if (!token) throw new Error("not token");
-    const decode = jwtDecode(token);
-    const email = decode.email;
-    const user = await User.findOne({ email });
-    if (!user) throw new Error("not user");
-    user.verification_account = true;
-    await user.save();
-    res.json("verify success");
-  } catch (error) {
-    res.json(error);
+  const { token } = req.params;
+  const verifyAccount = req.cookies.verifyAccount;
+  if (!verifyAccount) throw new Error("Invalid link.");
+  const decoded = jwtDecode(verifyAccount);
+  const email = decoded.email;
+  const randomVerifyAccountToken = decoded.randomVerifyAccountToken;
+  console.log("randomVerifyAccountToken", randomVerifyAccountToken);
+  if (token !== randomVerifyAccountToken) {
+    throw new Error("token ist üngultig");
   }
+  const user = await Users.findOne({ email });
+  if (!user) throw new Error("You must register first.");
+  user.isAccountVerified = true;
+  await user.save();
+  res
+    .status(200)
+    .json({ success: true, message: "Account verified successfully." });
 });
 
-//Login
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  const foundUser = await User.findOne({ email });
-  if (foundUser && (await foundUser.isPasswordMatched(password))) {
-    if (foundUser.verification_account) {
-      const {
-        _id: userId,
-        firstName,
-        lastName,
-        email,
-        photo,
-        isAdmin,
-      } = foundUser;
-      const accessToken = jwt.sign(
-        {
-          userId,
-          firstName,
-          lastName,
-          email,
-          photo,
-          isAdmin,
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        {
-          expiresIn: "1d",
-        }
-      );
-      const refreshToken = jwt.sign(
-        {
-          userId,
-          firstName,
-          lastName,
-          email,
-          photo,
-          isAdmin,
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        {
-          expiresIn: "30s",
-        }
-      );
-
-      await User.findByIdAndUpdate(userId, { access_token: accessToken });
-
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-
-      const userInfo_access = jwtDecode(accessToken);
-      const userInfo_refresh = jwtDecode(refreshToken);
-
-      res.json({
-        accessToken,
-        userInfo_access,
-        userInfo_refresh,
-        refreshToken,
-        message: "Sie haben erfolgreich login",
-      });
-    } else {
-      const verifyAccountToken = jwt.sign(
+  const userFound = await Users.findOne({ email });
+  if (userFound && (await userFound.isPasswordMatched(password))) {
+    if (!userFound.isAccountVerified) {
+      const randomVerifyAccountToken = randomBytes(16).toString("hex");
+      const verifyToken = jwt.sign(
         {
           email,
+          randomVerifyAccountToken,
         },
-        process.env.VERIFY_ACCOUNT_TOKEN_SECRET,
+        process.env.VERIFY_TOKEN_SECRET,
         {
           expiresIn: "15m",
         }
       );
-      res.cookie("verify_account", verifyAccountToken, {
+
+      res.cookie("verifyAccount", verifyToken, {
         httpOnly: true,
-        maxAge: 2 * 60 * 1000,
-        secure: true,
+        maxAge: 15 * 60 * 1000,
+        secure: false,
       });
 
-      await sendVerificationEmail(email, verifyAccountToken);
-
+      await sendVerificationLinkToEmail(
+        email,
+        userFound.firstName,
+        randomVerifyAccountToken
+      );
       throw new Error(
-        "Sie mussen Ihre Account Verification, wir haben eine Link für Sie geschikt"
+        "A verification link has been sent to your email for account activation."
       );
     }
-  } else {
-    throw new Error("Email or Password is falsh");
-  }
-});
+    const {
+      _id: userId,
+      firstName,
+      lastName,
+      isAccountVerified,
+      isAdmin,
+      profile_photo: photo,
+    } = userFound;
+    const accessToken = jwt.sign(
+      {
+        userId,
+        firstName,
+        lastName,
+        email,
+        isAccountVerified,
+        isAdmin,
+        photo,
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+    const refreshToken = jwt.sign(
+      {
+        userId,
+        firstName,
+        lastName,
+        email,
+        isAccountVerified,
+        isAdmin,
+        photo,
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: "30s",
+      }
+    );
+    await Users.findByIdAndUpdate(userId, { access_token: accessToken });
 
-//Logout
-export const logoutUser = asyncHandler(async (req, res) => {
-  const token = req.cookies.accessToken;
-  if (!token) throw new Error("keine Token verfügbar");
-  const user = await User.findOne({ access_token: token });
-  if (!user) throw new Error("Keine user gefunden");
-  user.access_token = undefined;
-  await user.save();
-  res.clearCookie("accessToken");
-  res.json("logout successfull");
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+      secure: false,
+    });
+
+    const decode = jwtDecode(accessToken);
+
+    res.json({
+      message: "Login successful",
+      token: refreshToken,
+      userId: decode.userId,
+    });
+  } else {
+    throw new Error("Invalid username or password");
+  }
 });
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
-    const user = await User.find();
+    const user = await Users.find();
     res.json(user);
   } catch (error) {
     res.json(error);

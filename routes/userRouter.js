@@ -1,8 +1,9 @@
 import express from "express";
 import {
+
   getAllUsers,
   loginUser,
-  logoutUser,
+
   registerUser,
   verifyAccount,
 } from "../controllers/userController.js";
@@ -16,7 +17,7 @@ router.get("/api/token",refreshToken)
 router.post("/api/register", registerUser);
 router.get("/api/verify_account/:token", verifyAccount);
 router.post("/api/login", loginUser);
-router.delete("/api/logout", logoutUser);
+
 
 router.get("/api/users", getAllUsers);
 

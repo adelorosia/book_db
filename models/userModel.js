@@ -23,7 +23,7 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    verification_account: {
+    isAccountVerified: {
       type: Boolean,
       default: false,
     },
@@ -49,5 +49,5 @@ userSchema.methods.isPasswordMatched = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-const User = mongoose.model("User", userSchema);
-export default User;
+const Users = mongoose.model("User", userSchema);
+export default Users;

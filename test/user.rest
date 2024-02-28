@@ -5,12 +5,13 @@ Content-Type: application/json
 {
     "firstName":"Khalil",
     "lastName":"Haouas",
-    "email":"kalil.haouas@gmail.com",
-    "password":"123456"
+    "email":"adel_orosia@yahoo.com",
+    "password":"123456",
+    "confirmPassword":"123456"
 }
 
 ### Verify Account
-GET http://localhost:3005/api/verify_account/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImthbGlsLmhhb3Vhc0BnbWFpbC5jb20iLCJpYXQiOjE3MDg2MzEzOTEsImV4cCI6MTcwODYzMTUxMX0.5KBapH9DsJPim_BIsy3Izr4BLScd9H6F9-q5mgYy1VU
+GET http://localhost:3005/api/verify_account/c94a1cb479d2663db54b7fb6226fac13
 
 ### Login
 POST http://localhost:3005/api/login
